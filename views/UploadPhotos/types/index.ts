@@ -6,6 +6,12 @@ export interface UploadingItem {
   progress: number;
 }
 
+export interface FailedUpload {
+  file: File;
+  filename: string;
+  error: string;
+}
+
 export type LayoutMode = "grid" | "list";
 
 export type DisplayPhoto = Photo & {

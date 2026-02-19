@@ -30,12 +30,16 @@ export function useUploadPhotos() {
     fileInputRef,
     uploading,
     uploadError,
+    failedUploads,
+    retryFailedUploads,
+    dismissFailedUploads,
     onFileChange,
     onDrop,
     onDragOver,
   } = uploadState;
 
-  const displayPhotos = useDisplayPhotos(photos, uploading);
+  // Option A: grid and selection use only persisted photos; uploading shown only in UploadProgressCard
+  const displayPhotos = useDisplayPhotos(photos, []);
   const totalCount = displayPhotos.length;
 
   const selection = useSelection(displayPhotos);
@@ -91,6 +95,9 @@ export function useUploadPhotos() {
     photos,
     uploading,
     uploadError,
+    failedUploads,
+    retryFailedUploads,
+    dismissFailedUploads,
     previewPhoto,
     setPreviewPhoto,
     photoToDelete,
@@ -98,6 +105,7 @@ export function useUploadPhotos() {
     layout,
     setLayout,
     selectedIds,
+    selectedPhotos,
     confirmBulkDelete,
     setConfirmBulkDelete,
     deletingMessage,

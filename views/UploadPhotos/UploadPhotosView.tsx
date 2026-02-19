@@ -1,15 +1,18 @@
 import React, { useState, useCallback } from "react";
 import AIAssistant from "../../components/AIAssistant";
+import { PhotoPreviewModal } from "../../components/PhotoPreviewModal";
+import { DownloadOptionsModal } from "../Submissions/DownloadOptionsModal";
+import { buildPhotosZip, suggestedZipFilename } from "../Submissions/utils";
 import { useUploadPhotos } from "./hooks";
 import { getOrCreateShareToken, getEventUrl } from "../../lib/share-links";
 import {
   UploadZone,
   UploadProgressCard,
+  FailedUploadsCard,
   GridHeader,
   SelectionBar,
-  PhotoCard,
-  PhotoListItem,
-  PreviewModal,
+  VirtualPhotoGrid,
+  VirtualPhotoList,
   DeletePhotoModal,
   BulkDeleteModal,
   DeletingToast,
@@ -17,6 +20,9 @@ import {
 
 export const UploadPhotosView: React.FC = () => {
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [isDownloadingZip, setIsDownloadingZip] = useState(false);
 
   const {
     projectId,
@@ -27,6 +33,9 @@ export const UploadPhotosView: React.FC = () => {
     photos,
     uploading,
     uploadError,
+    failedUploads,
+    retryFailedUploads,
+    dismissFailedUploads,
     previewPhoto,
     setPreviewPhoto,
     photoToDelete,
@@ -34,6 +43,7 @@ export const UploadPhotosView: React.FC = () => {
     layout,
     setLayout,
     selectedIds,
+    selectedPhotos,
     confirmBulkDelete,
     setConfirmBulkDelete,
     deletingMessage,
@@ -54,6 +64,26 @@ export const UploadPhotosView: React.FC = () => {
     handleBulkDelete,
     handleBulkDownload,
   } = useUploadPhotos();
+
+  const handleDownloadZip = useCallback(async () => {
+    if (selectedPhotos.length === 0) return;
+    setIsDownloadingZip(true);
+    try {
+      const zipFilename = suggestedZipFilename(
+        project?.client ?? project?.title ?? "gallery",
+        null
+      );
+      const { blob } = await buildPhotosZip(selectedPhotos);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = zipFilename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsDownloadingZip(false);
+    }
+  }, [selectedPhotos, project?.client, project?.title]);
 
   const handleShareEventLink = useCallback(async () => {
     if (!isValidProject) return;
@@ -118,11 +148,25 @@ export const UploadPhotosView: React.FC = () => {
         disabled={!isValidProject}
       />
 
-      {uploadError && (
+      {uploadError && failedUploads.length === 0 && (
         <div className="mb-4 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm font-medium">
           {uploadError}
         </div>
       )}
+
+      <FailedUploadsCard
+        failedUploads={failedUploads}
+        onRetry={async () => {
+          setIsRetrying(true);
+          try {
+            await retryFailedUploads();
+          } finally {
+            setIsRetrying(false);
+          }
+        }}
+        onDismiss={dismissFailedUploads}
+        isRetrying={isRetrying}
+      />
 
       <UploadProgressCard uploading={uploading} />
 
@@ -136,50 +180,77 @@ export const UploadPhotosView: React.FC = () => {
 
       <SelectionBar
         selectedCount={selectedIds.size}
-        onBulkDownload={handleBulkDownload}
+        onBulkDownload={() => setShowDownloadModal(true)}
         onBulkDelete={() => setConfirmBulkDelete(true)}
         onClearSelection={clearSelection}
+        isDownloadDisabled={isDownloadingZip}
+        downloadButtonLabel={isDownloadingZip ? "Preparing ZIP…" : undefined}
       />
 
-      {layout === "grid" ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-          {displayPhotos.map((photo) => (
-            <PhotoCard
-              key={photo.id}
-              photo={photo}
-              cld={cld}
-              isSelected={selectedIds.has(photo.id)}
-              isDeleting={deleteMutation.isPending}
-              onToggleSelect={toggleSelect}
-              onPreview={setPreviewPhoto}
-              onDownload={handleDownload}
-              onDelete={setPhotoToDelete}
-            />
-          ))}
+      {showDownloadModal && selectedIds.size > 0 && (
+        <DownloadOptionsModal
+          photoCount={selectedIds.size}
+          onClose={() => setShowDownloadModal(false)}
+          onSelectOriginal={() => {
+            setShowDownloadModal(false);
+            handleBulkDownload();
+          }}
+          onSelectZip={() => {
+            setShowDownloadModal(false);
+            handleDownloadZip();
+          }}
+        />
+      )}
+
+      {displayPhotos.length === 0 ? (
+        <div className="py-20 text-center text-slate-500 font-medium">
+          No photos yet. Drop files above or click to upload.
         </div>
+      ) : layout === "grid" ? (
+        <VirtualPhotoGrid
+          photos={displayPhotos}
+          cld={cld}
+          selectedIds={selectedIds}
+          isDeleting={deleteMutation.isPending}
+          onToggleSelect={toggleSelect}
+          onPreview={setPreviewPhoto}
+          onDownload={handleDownload}
+          onDelete={setPhotoToDelete}
+        />
       ) : (
-        <div className="flex flex-col gap-3">
-          {displayPhotos.map((photo) => (
-            <PhotoListItem
-              key={photo.id}
-              photo={photo}
-              cld={cld}
-              isSelected={selectedIds.has(photo.id)}
-              isDeleting={deleteMutation.isPending}
-              onToggleSelect={toggleSelect}
-              onPreview={setPreviewPhoto}
-              onDownload={handleDownload}
-              onDelete={setPhotoToDelete}
-            />
-          ))}
-        </div>
+        <VirtualPhotoList
+          photos={displayPhotos}
+          cld={cld}
+          selectedIds={selectedIds}
+          isDeleting={deleteMutation.isPending}
+          onToggleSelect={toggleSelect}
+          onPreview={setPreviewPhoto}
+          onDownload={handleDownload}
+          onDelete={setPhotoToDelete}
+        />
       )}
 
       {previewPhoto && (
-        <PreviewModal
+        <PhotoPreviewModal
           photo={previewPhoto}
+          photos={displayPhotos}
           cld={cld}
           onClose={() => setPreviewPhoto(null)}
+          onPrev={() => {
+            const idx = displayPhotos.findIndex((p) => p.id === previewPhoto.id);
+            if (idx > 0) setPreviewPhoto(displayPhotos[idx - 1]);
+          }}
+          onNext={() => {
+            const idx = displayPhotos.findIndex((p) => p.id === previewPhoto.id);
+            if (idx >= 0 && idx < displayPhotos.length - 1)
+              setPreviewPhoto(displayPhotos[idx + 1]);
+          }}
+          showBookmark={false}
+          isInAlbum={false}
+          isToggling={false}
+          isAlbumLocked={true}
+          isSubmitting={false}
+          onToggleBookmark={() => {}}
         />
       )}
 

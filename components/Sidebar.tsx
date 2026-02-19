@@ -21,7 +21,7 @@ const Sidebar: React.FC<{ role: UserRole }> = ({ role }) => {
         ]
       : [
           { name: "My events", icon: "event_available", path: "/user/events" },
-          { name: "My bookmarks", icon: "bookmark", path: "/user/bookmarks" },
+          { name: "My favorites", icon: "favorite", path: "/user/bookmarks" },
         ];
 
   return (

@@ -24,7 +24,7 @@ const EventPhotoCardInner: React.FC<EventPhotoCardProps> = ({
   onToggleAlbum,
   onPreview,
 }) => (
-  <div className="relative aspect-square rounded-2xl overflow-hidden group bg-slate-100 dark:bg-gray-800 border-2 border-slate-100 dark:border-gray-800 hover:border-primary/50 transition-colors">
+  <div className="relative aspect-square rounded-2xl overflow-hidden group bg-slate-100 dark:bg-gray-800 border-2 border-slate-100 dark:border-gray-800 hover:border-primary/50 transition-colors contain-[layout_paint]">
     <PhotoImage
       photo={photo}
       cld={cld}
@@ -43,7 +43,7 @@ const EventPhotoCardInner: React.FC<EventPhotoCardProps> = ({
       <button
         type="button"
         className="size-9 rounded-full bg-white text-slate-900 flex items-center justify-center hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label={isInAlbum ? "Remove from album" : "Add to album"}
+        aria-label={isInAlbum ? "Remove from favorites" : "Add to favorites"}
         onClick={() => onToggleAlbum(photo)}
         disabled={isSubmitting || isAlbumLocked}
       >
@@ -53,14 +53,14 @@ const EventPhotoCardInner: React.FC<EventPhotoCardProps> = ({
           </span>
         ) : (
           <span className="material-symbols-outlined text-xl">
-            {isInAlbum ? "bookmark_remove" : "bookmark_add"}
+            {isInAlbum ? "favorite" : "favorite_border"}
           </span>
         )}
       </button>
     </div>
     {isInAlbum && (
       <div className="absolute top-3 right-3 size-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg">
-        <span className="material-symbols-outlined text-lg">bookmark</span>
+        <span className="material-symbols-outlined text-lg fill-current">favorite</span>
       </div>
     )}
   </div>

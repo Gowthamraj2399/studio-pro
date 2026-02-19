@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useEventGallery } from "./hooks";
-import { EventPhotoCard, AlbumBar, EventPreviewModal } from "./components";
+import { VirtualEventPhotoGrid, AlbumBar, EventPreviewModal } from "./components";
 
 export const EventGalleryView: React.FC = () => {
   const [previewPhoto, setPreviewPhoto] = useState<import("../../types").Photo | null>(null);
@@ -93,21 +93,16 @@ export const EventGalleryView: React.FC = () => {
           <p className="font-medium">No photos in this event yet.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-          {photos.map((photo) => (
-            <EventPhotoCard
-              key={photo.id}
-              photo={photo}
-              cld={cld}
-              isInAlbum={isInAlbum(photo.id)}
-              isToggling={isTogglingPhoto(photo.id)}
-              isSubmitting={submitAlbumMutation.isPending}
-              isAlbumLocked={album?.status === "submitted"}
-              onToggleAlbum={toggleAlbumPhoto}
-              onPreview={setPreviewPhoto}
-            />
-          ))}
-        </div>
+        <VirtualEventPhotoGrid
+          photos={photos}
+          cld={cld}
+          isInAlbum={isInAlbum}
+          isTogglingPhoto={isTogglingPhoto}
+          isSubmitting={submitAlbumMutation.isPending}
+          isAlbumLocked={album?.status === "submitted"}
+          onToggleAlbum={toggleAlbumPhoto}
+          onPreview={setPreviewPhoto}
+        />
       )}
 
       {previewPhoto && (

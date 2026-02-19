@@ -1,10 +1,13 @@
 export { UploadZone } from "./UploadZone";
 export { UploadProgressCard } from "./UploadProgressCard";
+export { FailedUploadsCard } from "./FailedUploadsCard";
 export { GridHeader } from "./GridHeader";
 export { SelectionBar } from "./SelectionBar";
 export { PhotoImage } from "./PhotoImage";
 export { PhotoCard } from "./PhotoCard";
 export { PhotoListItem } from "./PhotoListItem";
+export { VirtualPhotoGrid } from "./VirtualPhotoGrid";
+export { VirtualPhotoList } from "./VirtualPhotoList";
 export { PreviewModal } from "./PreviewModal";
 export { DeletePhotoModal } from "./DeletePhotoModal";
 export { BulkDeleteModal } from "./BulkDeleteModal";

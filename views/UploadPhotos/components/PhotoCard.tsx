@@ -25,7 +25,7 @@ const PhotoCardInner: React.FC<PhotoCardProps> = ({
   onDelete,
 }) => (
   <div
-    className={`relative aspect-square rounded-2xl overflow-hidden group bg-slate-100 dark:bg-gray-800 border-2 transition-colors ${
+    className={`relative aspect-square rounded-2xl overflow-hidden group bg-slate-100 dark:bg-gray-800 border-2 transition-colors contain-[layout_paint] ${
       isSelected
         ? "border-primary ring-2 ring-primary/30"
         : "border-slate-100 dark:border-gray-800"

@@ -1,12 +1,16 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { uploadProjectPhoto } from "../../../lib/cloudinary";
 import {
   insertProjectPhoto,
   projectPhotosQueryKey,
 } from "../../../lib/project-photos";
+import type { Photo } from "../../../types";
 import { UPLOAD_FOLDER_PREFIX } from "../config";
-import type { UploadingItem } from "../types";
+import type { UploadingItem, FailedUpload } from "../types";
+
+const UPLOAD_CONCURRENCY = 5;
+const PROGRESS_THROTTLE_MS = 200;
 
 interface UseUploadStateArgs {
   projectId: number;
@@ -21,68 +25,133 @@ export function useUploadState({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<UploadingItem[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [failedUploads, setFailedUploads] = useState<FailedUpload[]>([]);
 
-  const handleFiles = useCallback(
-    async (files: FileList | null) => {
-      if (!files?.length || !isValidProject) return;
-      setUploadError(null);
+  const progressRef = useRef<Map<string, number>>(new Map());
+
+  const flushProgress = useCallback(() => {
+    setUploading((prev) => {
+      if (prev.length === 0) return prev;
+      let changed = false;
+      const next = prev.map((u) => {
+        const p = progressRef.current.get(u.tempId);
+        if (p !== undefined && p !== u.progress) {
+          changed = true;
+          return { ...u, progress: p };
+        }
+        return u;
+      });
+      return changed ? next : prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(flushProgress, PROGRESS_THROTTLE_MS);
+    return () => clearInterval(id);
+  }, [flushProgress]);
+
+  const runUploadQueue = useCallback(
+    async (fileArray: File[]): Promise<FailedUpload[]> => {
       const folder = `${UPLOAD_FOLDER_PREFIX}/${projectId}`;
-      const fileArray = Array.from(files);
       const next: UploadingItem[] = fileArray.map((file, i) => ({
         tempId: `upload-${Date.now()}-${i}-${Math.random().toString(36).slice(2)}`,
         filename: file.name,
         progress: 0,
       }));
       setUploading((prev) => [...prev, ...next]);
+      next.forEach((u) => progressRef.current.set(u.tempId, 0));
 
-      const errors: string[] = [];
-      const uploadPromises = fileArray.map((file, i) => {
+      const failures: FailedUpload[] = [];
+      let index = 0;
+
+      const doOne = async (): Promise<void> => {
+        if (index >= fileArray.length) return;
+        const i = index++;
+        const file = fileArray[i];
         const tempId = next[i].tempId;
-        return uploadProjectPhoto(file, {
-          folder,
-          onProgress: (percent) => {
-            setUploading((prev) =>
-              prev.map((u) =>
-                u.tempId === tempId ? { ...u, progress: percent } : u
-              )
-            );
-          },
-        })
-          .then(async (result) => {
-            await insertProjectPhoto(projectId, {
-              url: result.secure_url,
-              filename: file.name,
-              public_id: result.public_id,
-            });
-            return result;
-          })
-          .catch((err) => {
-            errors.push(err instanceof Error ? err.message : "Upload failed.");
-            throw err;
-          })
-          .finally(() => {
-            setUploading((prev) => prev.filter((u) => u.tempId !== tempId));
+        try {
+          const result = await uploadProjectPhoto(file, {
+            folder,
+            onProgress: (percent) => {
+              progressRef.current.set(tempId, percent);
+            },
           });
-      });
-
-      try {
-        await Promise.allSettled(uploadPromises);
-        if (errors.length > 0) {
-          setUploadError(
-            errors.length === 1
-              ? errors[0]
-              : `${errors.length} upload(s) failed.`
+          const photo = await insertProjectPhoto(projectId, {
+            url: result.secure_url,
+            filename: file.name,
+            public_id: result.public_id,
+          });
+          queryClient.setQueryData(
+            projectPhotosQueryKey(projectId),
+            (old: Photo[] | undefined) => (old ? [photo, ...old] : [photo])
           );
+        } catch (err) {
+          const message =
+            err instanceof Error ? err.message : "Upload failed.";
+          failures.push({ file, filename: file.name, error: message });
+        } finally {
+          progressRef.current.delete(tempId);
+          setUploading((prev) => prev.filter((u) => u.tempId !== tempId));
         }
-        queryClient.invalidateQueries({
-          queryKey: projectPhotosQueryKey(projectId),
-        });
-      } catch {
-        // Individual errors already handled in catch above
-      }
+        await doOne();
+      };
+
+      const workers = Array.from(
+        { length: Math.min(UPLOAD_CONCURRENCY, fileArray.length) },
+        () => doOne()
+      );
+      await Promise.all(workers);
+
+      return failures;
     },
-    [projectId, isValidProject, queryClient]
+    [projectId]
   );
+
+  const handleFiles = useCallback(
+    async (files: FileList | null) => {
+      if (!files?.length || !isValidProject) return;
+      setUploadError(null);
+      setFailedUploads([]);
+      const fileArray = Array.from(files);
+      const failures = await runUploadQueue(fileArray);
+      if (failures.length > 0) {
+        setFailedUploads(failures);
+        setUploadError(
+          failures.length === 1
+            ? failures[0].error
+            : `${failures.length} upload(s) failed.`
+        );
+      }
+      queryClient.invalidateQueries({
+        queryKey: projectPhotosQueryKey(projectId),
+      });
+    },
+    [isValidProject, projectId, queryClient, runUploadQueue]
+  );
+
+  const retryFailedUploads = useCallback(async () => {
+    if (failedUploads.length === 0) return;
+    setUploadError(null);
+    const files = failedUploads.map((f) => f.file);
+    setFailedUploads([]);
+    const failures = await runUploadQueue(files);
+    if (failures.length > 0) {
+      setFailedUploads(failures);
+      setUploadError(
+        failures.length === 1
+          ? failures[0].error
+          : `${failures.length} upload(s) failed.`
+      );
+    }
+    queryClient.invalidateQueries({
+      queryKey: projectPhotosQueryKey(projectId),
+    });
+  }, [failedUploads, projectId, queryClient, runUploadQueue]);
+
+  const dismissFailedUploads = useCallback(() => {
+    setFailedUploads([]);
+    setUploadError(null);
+  }, []);
 
   const onFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +175,10 @@ export function useUploadState({
     fileInputRef,
     uploading,
     uploadError,
+    failedUploads,
     handleFiles,
+    retryFailedUploads,
+    dismissFailedUploads,
     onFileChange,
     onDrop,
     onDragOver,

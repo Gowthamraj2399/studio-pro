@@ -1,5 +1,4 @@
 import React, { memo } from "react";
-import { AdvancedImage } from "@cloudinary/react";
 import { fill } from "@cloudinary/url-gen/actions/resize";
 import type { Cloudinary } from "@cloudinary/url-gen";
 import type { Photo } from "../../../types";
@@ -24,6 +23,7 @@ const PhotoImageInner: React.FC<PhotoImageProps> = ({
         src={photo.url}
         alt={photo.filename}
         className={className}
+        loading={thumbSize ? "lazy" : undefined}
       />
     );
   }
@@ -31,10 +31,13 @@ const PhotoImageInner: React.FC<PhotoImageProps> = ({
     const img = thumbSize
       ? cld.image(photo.public_id).resize(fill().width(thumbSize).height(thumbSize))
       : cld.image(photo.public_id);
+    const url = img.toURL();
     return (
-      <AdvancedImage
-        cldImg={img}
+      <img
+        src={url}
+        alt={photo.filename}
         className={className}
+        loading={thumbSize ? "lazy" : undefined}
       />
     );
   }

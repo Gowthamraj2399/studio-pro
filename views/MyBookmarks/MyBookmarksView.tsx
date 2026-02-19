@@ -192,7 +192,7 @@ export const MyBookmarksView: React.FC = () => {
         <span className="material-symbols-outlined animate-spin text-4xl">
           progress_activity
         </span>
-        <span>Loading your bookmarks…</span>
+        <span>Loading your favorites…</span>
       </div>
     );
   }
@@ -201,7 +201,7 @@ export const MyBookmarksView: React.FC = () => {
     return (
       <div className="max-w-6xl mx-auto py-16 text-center">
         <p className="text-red-600 dark:text-red-400 font-medium">
-          {error instanceof Error ? error.message : "Failed to load bookmarks."}
+          {error instanceof Error ? error.message : "Failed to load favorites."}
         </p>
       </div>
     );
@@ -211,11 +211,11 @@ export const MyBookmarksView: React.FC = () => {
     <div className="max-w-6xl mx-auto pb-12">
       <div className="mb-10">
         <h1 className="text-3xl font-black tracking-tight mb-2">
-          My bookmarked photos
+          My favorite photos
         </h1>
         <p className="text-slate-500 font-medium">
           {totalPhotos === 0
-            ? "No bookmarked photos yet. Open an event and add photos to your album."
+            ? "No favorite photos yet. Open an event and add photos to your favorites."
             : `${totalPhotos} photo${totalPhotos !== 1 ? "s" : ""} across ${sections.length} event${sections.length !== 1 ? "s" : ""}.`}
         </p>
       </div>
@@ -223,11 +223,11 @@ export const MyBookmarksView: React.FC = () => {
       {sections.length === 0 ? (
         <div className="text-center py-20 text-slate-500 dark:text-gray-400">
           <span className="material-symbols-outlined text-5xl mb-4 block">
-            bookmark_border
+            favorite_border
           </span>
-          <p className="font-medium">No bookmarks yet</p>
+          <p className="font-medium">No favorites yet</p>
           <p className="text-sm mt-1">
-            Go to My events, open an event, and add photos to your album.
+            Go to My events, open an event, and add photos to your favorites.
           </p>
         </div>
       ) : (

@@ -11,7 +11,7 @@ export interface PhotoPreviewModalProps {
   onClose: () => void;
   onPrev: () => void;
   onNext: () => void;
-  /** When false, the bookmark (add/remove from album) button is hidden. Default true. */
+  /** When false, the favorite (add/remove from favorites) button is hidden. Default true. */
   showBookmark?: boolean;
   isInAlbum: boolean;
   isToggling: boolean;
@@ -72,7 +72,7 @@ const PhotoPreviewModalInner: React.FC<PhotoPreviewModalProps> = ({
                 ? "bg-primary text-white hover:bg-primary/90"
                 : "bg-white/10 text-white hover:bg-white/20"
             }`}
-            aria-label={isInAlbum ? "Remove from album" : "Add to album"}
+            aria-label={isInAlbum ? "Remove from favorites" : "Add to favorites"}
             onClick={() => onToggleBookmark(photo)}
             disabled={isSubmitting || isAlbumLocked}
           >
@@ -82,7 +82,7 @@ const PhotoPreviewModalInner: React.FC<PhotoPreviewModalProps> = ({
               </span>
             ) : (
               <span className="material-symbols-outlined fill-current">
-                {isInAlbum ? "bookmark" : "bookmark_add"}
+                {isInAlbum ? "favorite" : "favorite_border"}
               </span>
             )}
           </button>

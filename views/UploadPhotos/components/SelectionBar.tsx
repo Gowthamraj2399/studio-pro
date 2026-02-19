@@ -5,6 +5,10 @@ interface SelectionBarProps {
   onBulkDownload: () => void;
   onBulkDelete: () => void;
   onClearSelection: () => void;
+  /** When true, the Download button is disabled (e.g. while preparing ZIP). */
+  isDownloadDisabled?: boolean;
+  /** Optional label for the Download button (e.g. "Preparing ZIP…"). */
+  downloadButtonLabel?: string;
 }
 
 const SelectionBarInner: React.FC<SelectionBarProps> = ({
@@ -12,6 +16,8 @@ const SelectionBarInner: React.FC<SelectionBarProps> = ({
   onBulkDownload,
   onBulkDelete,
   onClearSelection,
+  isDownloadDisabled = false,
+  downloadButtonLabel,
 }) => {
   if (selectedCount === 0) return null;
   return (
@@ -22,10 +28,15 @@ const SelectionBarInner: React.FC<SelectionBarProps> = ({
       <button
         type="button"
         onClick={onBulkDownload}
-        className="px-4 py-2 rounded-xl font-bold bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700 flex items-center gap-2"
+        disabled={isDownloadDisabled}
+        className="px-4 py-2 rounded-xl font-bold bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <span className="material-symbols-outlined text-lg">download</span>
-        Download
+        {isDownloadDisabled && downloadButtonLabel ? (
+          <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+        ) : (
+          <span className="material-symbols-outlined text-lg">download</span>
+        )}
+        {downloadButtonLabel ?? "Download"}
       </button>
       <button
         type="button"

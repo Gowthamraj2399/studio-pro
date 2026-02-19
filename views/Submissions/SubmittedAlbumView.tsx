@@ -9,7 +9,10 @@ import {
   reopenSubmittedAlbum,
 } from "../../lib/creator-submissions";
 import { PhotoImage } from "../UploadPhotos/components/PhotoImage";
+import { downloadPhoto } from "../UploadPhotos/utils";
 import { PhotoPreviewModal } from "../../components/PhotoPreviewModal";
+import { DownloadOptionsModal } from "./DownloadOptionsModal";
+import { buildPhotosZip, suggestedZipFilename } from "./utils";
 import type { Photo } from "../../types";
 import type { Cloudinary } from "@cloudinary/url-gen";
 
@@ -55,11 +58,16 @@ const ReadOnlyPhotoCard: React.FC<ReadOnlyPhotoCardProps> = ({
   </button>
 );
 
+const DOWNLOAD_DELAY_MS = 300;
+
 const SubmittedAlbumView: React.FC = () => {
   const { projectId, albumId } = useParams<{ projectId: string; albumId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingZip, setIsDownloadingZip] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: submittedAlbumWithPhotosQueryKey(albumId ?? ""),
@@ -94,6 +102,46 @@ const SubmittedAlbumView: React.FC = () => {
       setPreviewPhoto(photos[currentPreviewIndex + 1]);
     }
   }, [currentPreviewIndex, photos.length, photos]);
+
+  const handleDownloadAll = useCallback(async () => {
+    if (photos.length === 0) return;
+    setIsDownloading(true);
+    try {
+      for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i];
+        if (photo.url) await downloadPhoto(photo);
+        if (i < photos.length - 1) {
+          await new Promise((r) => setTimeout(r, DOWNLOAD_DELAY_MS));
+        }
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [photos]);
+
+  const handleDownloadZip = useCallback(async () => {
+    if (photos.length === 0 || !data) return;
+    const { project, album } = data;
+    setIsDownloadingZip(true);
+    try {
+      const zipFilename = suggestedZipFilename(
+        project?.project_name ?? "submission",
+        album?.submitted_at ?? null
+      );
+      const { blob, failedCount } = await buildPhotosZip(photos);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = zipFilename;
+      a.click();
+      URL.revokeObjectURL(url);
+      if (failedCount > 0) {
+        console.warn(`${failedCount} photo(s) could not be added to the ZIP.`);
+      }
+    } finally {
+      setIsDownloadingZip(false);
+    }
+  }, [photos, data]);
 
   if (!albumId) {
     return <Navigate to="/submissions" replace />;
@@ -158,20 +206,42 @@ const SubmittedAlbumView: React.FC = () => {
             {photos.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => reopenMutation.mutate()}
-          disabled={reopenMutation.isPending}
-          className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-amber-200 dark:border-amber-800"
-          title="Reopen so client can change selection and resubmit"
-        >
-          {reopenMutation.isPending ? (
-            <span className="material-symbols-outlined animate-spin">progress_activity</span>
-          ) : (
-            <span className="material-symbols-outlined">lock_open</span>
-          )}
-          Reopen for resubmission
-        </button>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowDownloadModal(true)}
+            disabled={photos.length === 0 || isDownloading || isDownloadingZip}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Download all photos in this submission"
+          >
+            {isDownloading ? (
+              <span className="material-symbols-outlined animate-spin">progress_activity</span>
+            ) : isDownloadingZip ? (
+              <span className="material-symbols-outlined animate-spin">progress_activity</span>
+            ) : (
+              <span className="material-symbols-outlined">download</span>
+            )}
+            {isDownloading
+              ? "Downloading…"
+              : isDownloadingZip
+                ? "Preparing ZIP…"
+                : "Download all"}
+          </button>
+          <button
+            type="button"
+            onClick={() => reopenMutation.mutate()}
+            disabled={reopenMutation.isPending}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-amber-200 dark:border-amber-800"
+            title="Reopen so client can change selection and resubmit"
+          >
+            {reopenMutation.isPending ? (
+              <span className="material-symbols-outlined animate-spin">progress_activity</span>
+            ) : (
+              <span className="material-symbols-outlined">lock_open</span>
+            )}
+            Reopen for resubmission
+          </button>
+        </div>
       </div>
 
       {photos.length === 0 ? (
@@ -192,6 +262,15 @@ const SubmittedAlbumView: React.FC = () => {
             />
           ))}
         </div>
+      )}
+
+      {showDownloadModal && (
+        <DownloadOptionsModal
+          photoCount={photos.length}
+          onClose={() => setShowDownloadModal(false)}
+          onSelectOriginal={handleDownloadAll}
+          onSelectZip={handleDownloadZip}
+        />
       )}
 
       {previewPhoto && (
