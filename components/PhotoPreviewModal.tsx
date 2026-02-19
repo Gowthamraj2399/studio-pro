@@ -11,6 +11,8 @@ export interface PhotoPreviewModalProps {
   onClose: () => void;
   onPrev: () => void;
   onNext: () => void;
+  /** When false, the bookmark (add/remove from album) button is hidden. Default true. */
+  showBookmark?: boolean;
   isInAlbum: boolean;
   isToggling: boolean;
   isAlbumLocked: boolean;
@@ -25,6 +27,7 @@ const PhotoPreviewModalInner: React.FC<PhotoPreviewModalProps> = ({
   onClose,
   onPrev,
   onNext,
+  showBookmark = true,
   isInAlbum,
   isToggling,
   isAlbumLocked,
@@ -57,32 +60,33 @@ const PhotoPreviewModalInner: React.FC<PhotoPreviewModalProps> = ({
       aria-modal="true"
       aria-label="Image preview"
     >
-      <button
-        type="button"
+      <div
         className="absolute top-4 right-4 z-10 flex items-center gap-2"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          className={`size-10 rounded-full flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
-            isInAlbum
-              ? "bg-primary text-white hover:bg-primary/90"
-              : "bg-white/10 text-white hover:bg-white/20"
-          }`}
-          aria-label={isInAlbum ? "Remove from album" : "Add to album"}
-          onClick={() => onToggleBookmark(photo)}
-          disabled={isSubmitting || isAlbumLocked}
-        >
-          {isToggling ? (
-            <span className="material-symbols-outlined animate-spin">
-              progress_activity
-            </span>
-          ) : (
-            <span className="material-symbols-outlined fill-current">
-              {isInAlbum ? "bookmark" : "bookmark_add"}
-            </span>
-          )}
-        </button>
+        {showBookmark && (
+          <button
+            type="button"
+            className={`size-10 rounded-full flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+              isInAlbum
+                ? "bg-primary text-white hover:bg-primary/90"
+                : "bg-white/10 text-white hover:bg-white/20"
+            }`}
+            aria-label={isInAlbum ? "Remove from album" : "Add to album"}
+            onClick={() => onToggleBookmark(photo)}
+            disabled={isSubmitting || isAlbumLocked}
+          >
+            {isToggling ? (
+              <span className="material-symbols-outlined animate-spin">
+                progress_activity
+              </span>
+            ) : (
+              <span className="material-symbols-outlined fill-current">
+                {isInAlbum ? "bookmark" : "bookmark_add"}
+              </span>
+            )}
+          </button>
+        )}
         <button
           type="button"
           className="size-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors"
@@ -91,7 +95,7 @@ const PhotoPreviewModalInner: React.FC<PhotoPreviewModalProps> = ({
         >
           <span className="material-symbols-outlined">close</span>
         </button>
-      </button>
+      </div>
 
       {hasPrev && (
         <button

@@ -3,6 +3,9 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import type { UserRole } from "../types";
 
+const isSubmissionsPath = (pathname: string) =>
+  pathname === "/submissions" || pathname.startsWith("/project/");
+
 const Sidebar: React.FC<{ role: UserRole }> = ({ role }) => {
   const navigate = useNavigate();
 
@@ -12,7 +15,10 @@ const Sidebar: React.FC<{ role: UserRole }> = ({ role }) => {
   };
   const navItems =
     role === "creator"
-      ? [{ name: "Galleries", icon: "dashboard", path: "/" }]
+      ? [
+          { name: "Galleries", icon: "dashboard", path: "/" },
+          { name: "Submissions", icon: "inbox", path: "/submissions" },
+        ]
       : [
           { name: "My events", icon: "event_available", path: "/user/events" },
           { name: "My bookmarks", icon: "bookmark", path: "/user/bookmarks" },
@@ -37,6 +43,12 @@ const Sidebar: React.FC<{ role: UserRole }> = ({ role }) => {
           <NavLink
             key={item.path}
             to={item.path}
+            end={item.path === "/"}
+            isActive={
+              role === "creator" && item.path === "/submissions"
+                ? (_, loc) => isSubmissionsPath(loc.pathname)
+                : undefined
+            }
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
                 isActive

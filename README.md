@@ -137,3 +137,11 @@ No code changes are required. Use a new project/account and point the app via en
 - **`views/`** — SignIn, ChooseRole, Dashboard, CreateProject, UploadPhotos, EventGallery, MyEvents, MyBookmarks.
 - **`components/`** — Sidebar, Header, shared UI (modals, toasts, etc.).
 - **`supabase/migrations/`** — SQL migrations; run in order by filename.
+
+---
+
+## Before publishing as a public repo
+
+- **Do not commit** `.env` or `.env.local` — they are in `.gitignore`. Only `.env.example` (placeholders only) should be committed.
+- **Remove `ui/.env` from git** if it was ever committed: run `git rm --cached ui/.env` (if the path exists in your repo) and commit the change. If that file ever contained real keys, consider rotating them and optionally rewriting history to remove the file from past commits.
+- **No secrets in code** — Supabase and Cloudinary are configured via `import.meta.env.VITE_*`; Gemini uses `process.env.GEMINI_API_KEY` from env. No keys are hardcoded in the repo.

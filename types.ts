@@ -77,3 +77,29 @@ export interface Notification {
   read_at: string | null;
   created_at: string;
 }
+
+// --- Creator submissions (view submitted albums) ---
+
+export interface CreatorSubmissionAlbum {
+  album_id: string;
+  submitted_at: string | null;
+  submitted_by_user_id: string;
+}
+
+export interface CreatorSubmissionProject {
+  project_id: number;
+  project_name: string | null;
+  albums: CreatorSubmissionAlbum[];
+}
+
+export interface SubmittedAlbumInfo {
+  id: string;
+  submitted_at: string | null;
+  submitted_by_user_id: string;
+}
+
+export interface SubmittedAlbumWithPhotosResult {
+  project: EventProject;
+  album: SubmittedAlbumInfo;
+  photos: Photo[];
+}

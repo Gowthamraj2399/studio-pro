@@ -27,6 +27,11 @@ import UploadPhotos from "./views/UploadPhotos";
 import EventGallery from "./views/EventGallery";
 import MyEvents from "./views/MyEvents";
 import MyBookmarks from "./views/MyBookmarks";
+import {
+  SubmissionsListView,
+  ProjectSubmissionsView,
+  SubmittedAlbumView,
+} from "./views/Submissions";
 import ChooseRole from "./views/ChooseRole";
 import SignIn from "./views/SignIn";
 
@@ -111,8 +116,10 @@ const AuthenticatedLayout: React.FC<{ role: "creator" | "client" }> = ({ role })
 
   const isCreatorPath =
     pathname === "/" ||
+    pathname === "/submissions" ||
     pathname.startsWith("/create-project") ||
-    pathname.startsWith("/upload/");
+    pathname.startsWith("/upload/") ||
+    pathname.startsWith("/project/");
   const isClientPath =
     pathname.startsWith("/user/events") ||
     pathname.startsWith("/user/bookmarks") ||
@@ -137,6 +144,9 @@ const AuthenticatedLayout: React.FC<{ role: "creator" | "client" }> = ({ role })
             <Route path="/" element={<Dashboard />} />
             <Route path="/create-project" element={<CreateProject />} />
             <Route path="/upload/:projectId" element={<UploadPhotos />} />
+            <Route path="/submissions" element={<SubmissionsListView />} />
+            <Route path="/project/:projectId/submissions" element={<ProjectSubmissionsView />} />
+            <Route path="/project/:projectId/submissions/:albumId" element={<SubmittedAlbumView />} />
             <Route path="/event/:token" element={<EventGallery />} />
             <Route path="/user/events" element={<MyEvents />} />
             <Route path="/user/bookmarks" element={<MyBookmarks />} />

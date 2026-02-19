@@ -10,14 +10,13 @@ import {
   getUserAlbum,
   getAlbumPhotoIds,
   userAlbumQueryKey,
+  albumPhotoIdsQueryKey,
   addPhotoToAlbum,
   removePhotoFromAlbum,
   submitAlbum,
 } from "../../../lib/user-albums";
+import { myBookmarksQueryKey } from "../../../lib/bookmarks";
 import type { Photo } from "../../../types";
-
-const albumPhotoIdsQueryKey = (albumId: string) =>
-  ["album_photo_ids", albumId] as const;
 
 export function useEventGallery() {
   const { token } = useParams<{ token: string }>();
@@ -56,13 +55,14 @@ export function useEventGallery() {
     mutationFn: ({ photoId }: { photoId: string }) =>
       addPhotoToAlbum(projectId, photoId),
     onMutate: ({ photoId }) => setTogglingPhotoId(photoId),
-    onSuccess: (_data, _variables, context) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userAlbumQueryKey(projectId) });
       if (album?.id) {
         queryClient.invalidateQueries({
           queryKey: albumPhotoIdsQueryKey(album.id),
         });
       }
+      queryClient.invalidateQueries({ queryKey: myBookmarksQueryKey });
     },
     onSettled: () => setTogglingPhotoId(null),
   });
@@ -78,6 +78,8 @@ export function useEventGallery() {
           (prev: string[] | undefined) => prev?.filter((id) => id !== photoId) ?? []
         );
       }
+      queryClient.invalidateQueries({ queryKey: userAlbumQueryKey(projectId) });
+      queryClient.invalidateQueries({ queryKey: myBookmarksQueryKey });
     },
     onSettled: () => setTogglingPhotoId(null),
   });
@@ -86,6 +88,7 @@ export function useEventGallery() {
     mutationFn: () => submitAlbum(album!.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userAlbumQueryKey(projectId) });
+      queryClient.invalidateQueries({ queryKey: myBookmarksQueryKey });
     },
   });
 

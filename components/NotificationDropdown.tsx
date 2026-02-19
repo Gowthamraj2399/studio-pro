@@ -1,10 +1,12 @@
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchNotifications,
   markAllNotificationsRead,
   notificationsQueryKey,
 } from "../lib/notifications";
+import type { Notification } from "../types";
 
 function formatNotificationTime(iso: string): string {
   const d = new Date(iso);
@@ -31,6 +33,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onClose,
   anchorRef,
 }) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: notifications = [] } = useQuery({
     queryKey: notificationsQueryKey,
@@ -47,6 +50,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       });
     }
   }, [isOpen, unreadCount, queryClient]);
+
+  const handleNotificationClick = (n: Notification) => {
+    if (n.type === "album_submitted" && n.payload?.project_id != null && n.payload?.album_id) {
+      navigate(`/project/${n.payload.project_id}/submissions/${n.payload.album_id}`);
+      onClose();
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -86,24 +96,33 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             </div>
           ) : (
             <ul className="divide-y divide-slate-100 dark:divide-gray-700">
-              {notifications.map((n) => (
-                <li
-                  key={n.id}
-                  className="p-3 hover:bg-slate-50 dark:hover:bg-gray-700/50 transition-colors"
-                >
-                  <p className="font-semibold text-slate-900 dark:text-white text-sm">
-                    {n.title}
-                  </p>
-                  {n.body && (
-                    <p className="text-slate-600 dark:text-gray-300 text-sm mt-0.5">
-                      {n.body}
-                    </p>
-                  )}
-                  <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">
-                    {formatNotificationTime(n.created_at)}
-                  </p>
-                </li>
-              ))}
+              {notifications.map((n) => {
+                const isClickable =
+                  n.type === "album_submitted" &&
+                  n.payload?.project_id != null &&
+                  Boolean(n.payload?.album_id);
+                return (
+                  <li key={n.id}>
+                    <button
+                      type="button"
+                      className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer disabled:cursor-default"
+                      onClick={() => isClickable && handleNotificationClick(n)}
+                    >
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                        {n.title}
+                      </p>
+                      {n.body && (
+                        <p className="text-slate-600 dark:text-gray-300 text-sm mt-0.5">
+                          {n.body}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">
+                        {formatNotificationTime(n.created_at)}
+                      </p>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

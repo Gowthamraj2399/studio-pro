@@ -22,6 +22,8 @@ function mapRowToAlbum(row: UserAlbumRow): UserAlbum {
 }
 
 export const userAlbumQueryKey = (projectId: number) => ["user_album", projectId] as const;
+export const albumPhotoIdsQueryKey = (albumId: string) =>
+  ["album_photo_ids", albumId] as const;
 export const myAlbumsQueryKey = ["my_albums"] as const;
 
 /**

@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { getCloudinaryInstanceOrNull } from "../../lib/cloudinary";
 import { getMyBookmarkedSections, myBookmarksQueryKey } from "../../lib/bookmarks";
-import { removePhotoFromAlbum } from "../../lib/user-albums";
+import {
+  removePhotoFromAlbum,
+  submitAlbum,
+  userAlbumQueryKey,
+  albumPhotoIdsQueryKey,
+} from "../../lib/user-albums";
 import { PhotoImage } from "../UploadPhotos/components/PhotoImage";
 import { PhotoPreviewModal } from "../../components/PhotoPreviewModal";
 import type { Photo } from "../../types";
@@ -13,12 +18,17 @@ function SectionPhotos({
   section,
   cld,
   onPreview,
+  onSubmit,
+  isSubmitting,
 }: {
   section: BookmarkedSection;
   cld: ReturnType<typeof getCloudinaryInstanceOrNull>;
   onPreview: (photo: Photo, section: BookmarkedSection) => void;
+  onSubmit: (albumId: string) => void;
+  isSubmitting: boolean;
 }) {
   const navigate = useNavigate();
+  const isDraft = section.album.status === "draft";
 
   return (
     <section className="mb-12">
@@ -31,6 +41,23 @@ function SectionPhotos({
             <span className="px-3 py-1 rounded-lg text-xs font-bold bg-green-500/20 text-green-700 dark:text-green-300">
               Submitted
             </span>
+          )}
+          {isDraft && (
+            <button
+              type="button"
+              onClick={() => onSubmit(section.album.id)}
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <span className="material-symbols-outlined animate-spin text-lg">
+                  progress_activity
+                </span>
+              ) : (
+                <span className="material-symbols-outlined text-lg">send</span>
+              )}
+              Submit selection
+            </button>
           )}
           <button
             type="button"
@@ -81,6 +108,8 @@ export const MyBookmarksView: React.FC = () => {
     queryFn: getMyBookmarkedSections,
   });
 
+  const [submittingAlbumId, setSubmittingAlbumId] = useState<string | null>(null);
+
   const removeFromAlbumMutation = useMutation({
     mutationFn: ({
       albumId,
@@ -93,6 +122,14 @@ export const MyBookmarksView: React.FC = () => {
     onSettled: () => setTogglingPhotoId(null),
     onSuccess: (_data, { photoId, previewState: state }) => {
       queryClient.invalidateQueries({ queryKey: myBookmarksQueryKey });
+      if (state?.section) {
+        queryClient.invalidateQueries({
+          queryKey: userAlbumQueryKey(state.section.projectId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: albumPhotoIdsQueryKey(state.section.album.id),
+        });
+      }
       if (!state) {
         setPreviewState(null);
         return;
@@ -110,6 +147,15 @@ export const MyBookmarksView: React.FC = () => {
         section: { ...state.section, photos: remainingPhotos },
       });
     },
+  });
+
+  const submitAlbumMutation = useMutation({
+    mutationFn: (albumId: string) => submitAlbum(albumId),
+    onMutate: (albumId) => setSubmittingAlbumId(albumId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: myBookmarksQueryKey });
+    },
+    onSettled: (_, __, albumId) => setSubmittingAlbumId((id) => (id === albumId ? null : id)),
   });
 
   const goToPrev = useCallback(() => {
@@ -191,6 +237,8 @@ export const MyBookmarksView: React.FC = () => {
             section={section}
             cld={cld}
             onPreview={(photo, sec) => setPreviewState({ photo, section: sec })}
+            onSubmit={(albumId) => submitAlbumMutation.mutate(albumId)}
+            isSubmitting={submittingAlbumId === section.album.id}
           />
         ))
       )}
