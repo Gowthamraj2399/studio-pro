@@ -1,6 +1,8 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { useQuery } from "@tanstack/react-query";
+import { authQueryKey, fetchSession, getDisplayName } from "../lib/auth-query";
+import { useAuth } from "../hooks/useAuth";
 import type { UserRole } from "../types";
 
 const isSubmissionsPath = (pathname: string) =>
@@ -8,9 +10,16 @@ const isSubmissionsPath = (pathname: string) =>
 
 const Sidebar: React.FC<{ role: UserRole }> = ({ role }) => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
+
+  const { data: session } = useQuery({
+    queryKey: authQueryKey,
+    queryFn: fetchSession,
+  });
+  const displayName = getDisplayName(session ?? null);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate("/signin", { replace: true });
   };
   const navItems =
@@ -30,11 +39,16 @@ const Sidebar: React.FC<{ role: UserRole }> = ({ role }) => {
         <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
           <span className="material-symbols-outlined">photo_camera</span>
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold tracking-tight">Studio Pro</h1>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
             {role === "creator" ? "Professional Admin" : "Event photos"}
           </p>
+          {displayName && (
+            <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300 truncate" title={displayName}>
+              {displayName}
+            </p>
+          )}
         </div>
       </div>
 
@@ -52,8 +66,8 @@ const Sidebar: React.FC<{ role: UserRole }> = ({ role }) => {
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
                 isActive
-                  ? 'bg-primary/10 text-primary shadow-sm'
-                  : 'text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800 hover:text-primary'
+                  ? "bg-primary/10 text-primary shadow-sm"
+                  : "text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800 hover:text-primary"
               }`
             }
           >
@@ -67,10 +81,10 @@ const Sidebar: React.FC<{ role: UserRole }> = ({ role }) => {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-gray-400 font-semibold text-sm hover:text-red-500 transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-gray-400 font-semibold text-sm hover:text-red-500 transition-colors cursor-pointer"
         >
           <span className="material-symbols-outlined">logout</span>
-          Logout
+          Sign out
         </button>
       </div>
     </aside>

@@ -1,19 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { supabase } from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const { signIn } = useAuth();
 
   const signInMutation = useMutation({
-    mutationFn: async (credentials: { email: string; password: string }) => {
-      const { error } = await supabase.auth.signInWithPassword(credentials);
-      if (error) throw error;
-    },
+    mutationFn: signIn,
     onSuccess: () => {
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? "/";
       navigate(from, { replace: true });
