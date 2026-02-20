@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import AIAssistant from "../../components/AIAssistant";
 import { PhotoPreviewModal } from "../../components/PhotoPreviewModal";
 import { DownloadOptionsModal } from "../Submissions/DownloadOptionsModal";
@@ -129,6 +130,13 @@ export const UploadPhotosView: React.FC = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <Link
+            to={`/project/${projectId}/settings`}
+            className="h-10 px-4 bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            <span className="material-symbols-outlined text-lg">settings</span>
+            Settings
+          </Link>
           <button
             type="button"
             onClick={handleShareEventLink}

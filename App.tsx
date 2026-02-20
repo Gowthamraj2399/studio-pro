@@ -32,6 +32,7 @@ import {
   ProjectSubmissionsView,
   SubmittedAlbumView,
 } from "./views/Submissions";
+import ProjectSettings from "./views/ProjectSettings";
 import ChooseRole from "./views/ChooseRole";
 import SignIn from "./views/SignIn";
 
@@ -147,6 +148,7 @@ const AuthenticatedLayout: React.FC<{ role: "creator" | "client" }> = ({ role })
             <Route path="/submissions" element={<SubmissionsListView />} />
             <Route path="/project/:projectId/submissions" element={<ProjectSubmissionsView />} />
             <Route path="/project/:projectId/submissions/:albumId" element={<SubmittedAlbumView />} />
+            <Route path="/project/:projectId/settings" element={<ProjectSettings />} />
             <Route path="/event/:token" element={<EventGallery />} />
             <Route path="/user/events" element={<MyEvents />} />
             <Route path="/user/bookmarks" element={<MyBookmarks />} />

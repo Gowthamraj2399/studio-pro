@@ -15,11 +15,16 @@ const PROGRESS_THROTTLE_MS = 200;
 interface UseUploadStateArgs {
   projectId: number;
   isValidProject: boolean;
+  /** When both set, used for upload instead of env. */
+  cloudinaryCloudName?: string | null;
+  cloudinaryUploadPreset?: string | null;
 }
 
 export function useUploadState({
   projectId,
   isValidProject,
+  cloudinaryCloudName,
+  cloudinaryUploadPreset,
 }: UseUploadStateArgs) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,6 +80,12 @@ export function useUploadState({
             onProgress: (percent) => {
               progressRef.current.set(tempId, percent);
             },
+            ...(cloudinaryCloudName &&
+            cloudinaryUploadPreset &&
+            cloudinaryCloudName.trim() !== "" &&
+            cloudinaryUploadPreset.trim() !== ""
+              ? { cloudName: cloudinaryCloudName, uploadPreset: cloudinaryUploadPreset }
+              : {}),
           });
           const photo = await insertProjectPhoto(projectId, {
             url: result.secure_url,
@@ -104,7 +115,7 @@ export function useUploadState({
 
       return failures;
     },
-    [projectId]
+    [projectId, cloudinaryCloudName, cloudinaryUploadPreset]
   );
 
   const handleFiles = useCallback(

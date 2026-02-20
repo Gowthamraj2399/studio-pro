@@ -83,7 +83,11 @@ const SubmittedAlbumView: React.FC = () => {
     },
   });
 
-  const cld = useMemo(() => getCloudinaryInstanceOrNull(), []);
+  const cld = useMemo(
+    () =>
+      getCloudinaryInstanceOrNull(data?.project?.cloudinary_cloud_name ?? undefined),
+    [data?.project?.cloudinary_cloud_name]
+  );
 
   const photos = data?.photos ?? [];
   const currentPreviewIndex =

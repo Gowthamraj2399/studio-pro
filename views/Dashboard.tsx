@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProjectStatus } from "../types";
 import { fetchProjects, projectsQueryKey } from "../lib/projects";
@@ -142,8 +142,16 @@ const Dashboard: React.FC = () => {
             <div
               key={project.id}
               onClick={() => navigate(`/upload/${project.id}`)}
-              className="group bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer"
+              className="group bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer relative"
             >
+              <Link
+                to={`/project/${project.id}/settings`}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute top-3 right-3 z-10 size-9 rounded-lg bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors"
+                aria-label="Project settings"
+              >
+                <span className="material-symbols-outlined text-lg">settings</span>
+              </Link>
               <div className="relative aspect-[4/3] overflow-hidden">
                 <img
                   src={project.thumbnail}

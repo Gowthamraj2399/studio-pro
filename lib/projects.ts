@@ -141,6 +141,9 @@ export interface ProjectRow {
   cover_url: string | null;
   user_id: string | null;
   album_size: number | null;
+  cloudinary_cloud_name: string | null;
+  cloudinary_upload_preset: string | null;
+  cloudinary_account_email: string | null;
 }
 
 const PLACEHOLDER_THUMBNAIL =
@@ -167,6 +170,9 @@ function mapRowToProject(row: ProjectRow): Project {
     photoCount: 0,
     category: "Weddings",
     album_size: row.album_size ?? null,
+    cloudinary_cloud_name: row.cloudinary_cloud_name ?? null,
+    cloudinary_upload_preset: row.cloudinary_upload_preset ?? null,
+    cloudinary_account_email: row.cloudinary_account_email ?? null,
   };
 }
 
@@ -182,7 +188,7 @@ export function projectQueryKey(id: number) {
 export async function getProject(projectId: number): Promise<Project | null> {
   const { data, error } = await supabase
     .from("projects")
-    .select("id, created_at, client_name, project_name, project_date, cover_url, user_id, album_size")
+    .select("id, created_at, client_name, project_name, project_date, cover_url, user_id, album_size, cloudinary_cloud_name, cloudinary_upload_preset, cloudinary_account_email")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -200,7 +206,7 @@ export async function getProject(projectId: number): Promise<Project | null> {
 export async function fetchProjects(): Promise<Project[]> {
   const { data, error } = await supabase
     .from("projects")
-    .select("id, created_at, client_name, project_name, project_date, cover_url, user_id, album_size")
+    .select("id, created_at, client_name, project_name, project_date, cover_url, user_id, album_size, cloudinary_cloud_name, cloudinary_upload_preset, cloudinary_account_email")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -208,4 +214,72 @@ export async function fetchProjects(): Promise<Project[]> {
   }
 
   return (data ?? []).map(mapRowToProject);
+}
+
+export interface UpdateProjectCloudinaryParams {
+  cloudinary_cloud_name: string | null;
+  cloudinary_upload_preset: string | null;
+  cloudinary_account_email?: string | null;
+}
+
+const CLOUDINARY_LOCKED_MESSAGE =
+  "Cloudinary credentials cannot be changed after photos have been added to this project.";
+
+/**
+ * Updates Cloudinary settings for a project. Cloud name and upload preset may only be changed when the project has zero photos; the optional account email note can always be updated.
+ * RLS ensures the current user owns the project.
+ */
+export async function updateProjectCloudinary(
+  projectId: number,
+  params: UpdateProjectCloudinaryParams
+): Promise<void> {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("You must be signed in to update project settings.");
+  }
+
+  const { count, error: countError } = await supabase
+    .from("project_photos")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", projectId);
+
+  if (countError) {
+    throw new Error(countError.message || "Failed to check project photos.");
+  }
+
+  const hasPhotos = count != null && count > 0;
+
+  if (hasPhotos) {
+    // Only allow updating the optional email note; do not change cloud name or preset.
+    const { error } = await supabase
+      .from("projects")
+      .update({
+        cloudinary_account_email: params.cloudinary_account_email?.trim() || null,
+      })
+      .eq("id", projectId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      throw new Error(error.message || "Failed to update Cloudinary settings.");
+    }
+    return;
+  }
+
+  const { error } = await supabase
+    .from("projects")
+    .update({
+      cloudinary_cloud_name: params.cloudinary_cloud_name || null,
+      cloudinary_upload_preset: params.cloudinary_upload_preset || null,
+      cloudinary_account_email: params.cloudinary_account_email?.trim() || null,
+    })
+    .eq("id", projectId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw new Error(error.message || "Failed to update Cloudinary settings.");
+  }
 }

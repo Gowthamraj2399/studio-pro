@@ -1,31 +1,56 @@
 import { Cloudinary } from "@cloudinary/url-gen";
 
-const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
-const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
+const envCloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
+const envUploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
 
-export function getCloudinaryConfig() {
-  if (!cloudName || !uploadPreset) {
-    throw new Error(
-      "Missing VITE_CLOUDINARY_CLOUD_NAME or VITE_CLOUDINARY_UPLOAD_PRESET. Add them to .env."
-    );
-  }
-  return { cloudName, uploadPreset };
+export interface CloudinaryConfigOverrides {
+  cloudName?: string;
+  uploadPreset?: string;
 }
 
 /**
- * Shared Cloudinary instance for url-gen (display, transformations).
- * Use only when cloud name is configured.
+ * Returns Cloudinary config. If overrides provide both cloudName and uploadPreset, use them; else use env.
  */
-export function getCloudinaryInstance(): Cloudinary {
-  const { cloudName: name } = getCloudinaryConfig();
+export function getCloudinaryConfig(overrides?: CloudinaryConfigOverrides): { cloudName: string; uploadPreset: string } {
+  const useOverrides =
+    overrides?.cloudName != null &&
+    overrides.cloudName.trim() !== "" &&
+    overrides?.uploadPreset != null &&
+    overrides.uploadPreset.trim() !== "";
+  if (useOverrides) {
+    return {
+      cloudName: overrides.cloudName!.trim(),
+      uploadPreset: overrides.uploadPreset!.trim(),
+    };
+  }
+  if (!envCloudName || !envUploadPreset) {
+    throw new Error(
+      "Missing VITE_CLOUDINARY_CLOUD_NAME or VITE_CLOUDINARY_UPLOAD_PRESET. Add them to .env or set per-project in Settings."
+    );
+  }
+  return { cloudName: envCloudName, uploadPreset: envUploadPreset };
+}
+
+/**
+ * Cloudinary instance for url-gen (display, transformations).
+ * If cloudName is passed, use it; otherwise use config from env (throws if env missing).
+ */
+export function getCloudinaryInstance(cloudName?: string): Cloudinary {
+  const name =
+    cloudName != null && cloudName.trim() !== ""
+      ? cloudName.trim()
+      : getCloudinaryConfig().cloudName;
   return new Cloudinary({
     cloud: { cloudName: name },
     url: { secure: true },
   });
 }
 
-/** Returns Cloudinary instance or null if env is not configured (e.g. display-only fallback to url). */
-export function getCloudinaryInstanceOrNull(): Cloudinary | null {
+/** Returns Cloudinary instance or null if no cloud name available (env and argument). */
+export function getCloudinaryInstanceOrNull(cloudName?: string): Cloudinary | null {
+  if (cloudName != null && cloudName.trim() !== "") {
+    return getCloudinaryInstance(cloudName);
+  }
   try {
     return getCloudinaryInstance();
   } catch {
@@ -41,6 +66,9 @@ export interface UploadProjectPhotoResult {
 export interface UploadProjectPhotoOptions {
   folder?: string;
   onProgress?: (percent: number) => void;
+  /** When set with uploadPreset, use these instead of env for this upload. */
+  cloudName?: string;
+  uploadPreset?: string;
 }
 
 /**
@@ -52,7 +80,14 @@ export async function uploadProjectPhoto(
   file: File,
   options?: UploadProjectPhotoOptions
 ): Promise<UploadProjectPhotoResult> {
-  const { cloudName: name, uploadPreset: preset } = getCloudinaryConfig();
+  const configOverrides =
+    options?.cloudName != null &&
+    options.cloudName.trim() !== "" &&
+    options?.uploadPreset != null &&
+    options.uploadPreset.trim() !== ""
+      ? { cloudName: options.cloudName, uploadPreset: options.uploadPreset }
+      : undefined;
+  const { cloudName: name, uploadPreset: preset } = getCloudinaryConfig(configOverrides);
 
   const formData = new FormData();
   formData.append("file", file);

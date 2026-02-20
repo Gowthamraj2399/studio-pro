@@ -25,6 +25,8 @@ export function useUploadPhotos() {
   const uploadState = useUploadState({
     projectId: isValidProject ? projectId : 0,
     isValidProject,
+    cloudinaryCloudName: project?.cloudinary_cloud_name ?? undefined,
+    cloudinaryUploadPreset: project?.cloudinary_upload_preset ?? undefined,
   });
   const {
     fileInputRef,
@@ -69,7 +71,10 @@ export function useUploadPhotos() {
 
   const { layout, setLayout } = useLayoutState();
 
-  const cld = useMemo(() => getCloudinaryInstanceOrNull(), []);
+  const cld = useMemo(
+    () => getCloudinaryInstanceOrNull(project?.cloudinary_cloud_name ?? undefined),
+    [project?.cloudinary_cloud_name]
+  );
 
   const handleDownload = useCallback(
     (photo: Photo) => downloadPhoto(photo),

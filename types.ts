@@ -17,6 +17,10 @@ export interface Project {
   photoCount: number;
   category: 'Weddings' | 'Editorial' | 'Portraits' | 'Event';
   album_size?: number | null;
+  cloudinary_cloud_name?: string | null;
+  cloudinary_upload_preset?: string | null;
+  /** Optional note: which email the Cloudinary account was created with. */
+  cloudinary_account_email?: string | null;
 }
 
 export interface Photo {
@@ -55,6 +59,8 @@ export interface EventProject {
   cover_url: string | null;
   created_at: string;
   album_size?: number | null;
+  cloudinary_cloud_name?: string | null;
+  cloudinary_upload_preset?: string | null;
 }
 
 export interface EventAccessItem {

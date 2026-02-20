@@ -104,7 +104,10 @@ export function useEventGallery() {
     [albumPhotoIds, addToAlbumMutation, removeFromAlbumMutation]
   );
 
-  const cld = useMemo(() => getCloudinaryInstanceOrNull(), []);
+  const cld = useMemo(
+    () => getCloudinaryInstanceOrNull(project?.cloudinary_cloud_name ?? undefined),
+    [project?.cloudinary_cloud_name]
+  );
 
   const albumSizeLimit = project?.album_size ?? null;
   const isAlbumFull =
