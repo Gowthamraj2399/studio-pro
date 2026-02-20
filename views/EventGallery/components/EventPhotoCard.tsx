@@ -10,6 +10,7 @@ interface EventPhotoCardProps {
   isToggling: boolean;
   isSubmitting: boolean;
   isAlbumLocked: boolean;
+  isAlbumFull: boolean;
   onToggleAlbum: (photo: Photo) => void;
   onPreview: (photo: Photo) => void;
 }
@@ -21,6 +22,7 @@ const EventPhotoCardInner: React.FC<EventPhotoCardProps> = ({
   isToggling,
   isSubmitting,
   isAlbumLocked,
+  isAlbumFull,
   onToggleAlbum,
   onPreview,
 }) => (
@@ -44,8 +46,9 @@ const EventPhotoCardInner: React.FC<EventPhotoCardProps> = ({
         type="button"
         className="size-9 rounded-full bg-white text-slate-900 flex items-center justify-center hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label={isInAlbum ? "Remove from favorites" : "Add to favorites"}
+        title={isAlbumFull && !isInAlbum ? "Album full" : undefined}
         onClick={() => onToggleAlbum(photo)}
-        disabled={isSubmitting || isAlbumLocked}
+        disabled={isSubmitting || isAlbumLocked || (isAlbumFull && !isInAlbum)}
       >
         {isToggling ? (
           <span className="material-symbols-outlined text-xl animate-spin">

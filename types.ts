@@ -16,6 +16,7 @@ export interface Project {
   thumbnail: string;
   photoCount: number;
   category: 'Weddings' | 'Editorial' | 'Portraits' | 'Event';
+  album_size?: number | null;
 }
 
 export interface Photo {
@@ -53,6 +54,7 @@ export interface EventProject {
   client_name: string | null;
   cover_url: string | null;
   created_at: string;
+  album_size?: number | null;
 }
 
 export interface EventAccessItem {

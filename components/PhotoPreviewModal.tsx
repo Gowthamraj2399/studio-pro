@@ -16,6 +16,8 @@ export interface PhotoPreviewModalProps {
   isInAlbum: boolean;
   isToggling: boolean;
   isAlbumLocked: boolean;
+  /** When true and not in album, add-to-favorites is disabled (album at capacity). */
+  isAlbumFull?: boolean;
   isSubmitting: boolean;
   onToggleBookmark: (photo: Photo) => void;
 }
@@ -31,6 +33,7 @@ const PhotoPreviewModalInner: React.FC<PhotoPreviewModalProps> = ({
   isInAlbum,
   isToggling,
   isAlbumLocked,
+  isAlbumFull = false,
   isSubmitting,
   onToggleBookmark,
 }) => {
@@ -74,7 +77,7 @@ const PhotoPreviewModalInner: React.FC<PhotoPreviewModalProps> = ({
             }`}
             aria-label={isInAlbum ? "Remove from favorites" : "Add to favorites"}
             onClick={() => onToggleBookmark(photo)}
-            disabled={isSubmitting || isAlbumLocked}
+            disabled={isSubmitting || isAlbumLocked || (isAlbumFull && !isInAlbum)}
           >
             {isToggling ? (
               <span className="material-symbols-outlined animate-spin">

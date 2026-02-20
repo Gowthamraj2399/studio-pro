@@ -132,9 +132,28 @@ export async function getOrCreateUserAlbum(projectId: number): Promise<UserAlbum
 
 /**
  * Adds a photo to the user's album. Creates album if needed.
+ * Respects project album_size limit when set.
  */
 export async function addPhotoToAlbum(projectId: number, photoId: string): Promise<void> {
   const album = await getOrCreateUserAlbum(projectId);
+
+  const { data: projectRow, error: projectError } = await supabase
+    .from("projects")
+    .select("album_size")
+    .eq("id", projectId)
+    .single();
+
+  if (projectError) {
+    throw new Error(projectError.message || "Failed to load project.");
+  }
+
+  const albumSize = (projectRow as { album_size: number | null } | null)?.album_size ?? null;
+  if (albumSize != null) {
+    const currentIds = await getAlbumPhotoIds(album.id);
+    if (!currentIds.includes(photoId) && currentIds.length >= albumSize) {
+      throw new Error(`Album is full (max ${albumSize} photos).`);
+    }
+  }
 
   const { error } = await supabase.from("user_album_photos").upsert(
     {

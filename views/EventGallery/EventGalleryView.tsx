@@ -13,6 +13,7 @@ export const EventGalleryView: React.FC = () => {
     eventError,
     album,
     albumPhotoIds,
+    isAlbumFull,
     isInAlbum,
     isTogglingPhoto,
     toggleAlbumPhoto,
@@ -100,6 +101,7 @@ export const EventGalleryView: React.FC = () => {
           isTogglingPhoto={isTogglingPhoto}
           isSubmitting={submitAlbumMutation.isPending}
           isAlbumLocked={album?.status === "submitted"}
+          isAlbumFull={isAlbumFull}
           onToggleAlbum={toggleAlbumPhoto}
           onPreview={setPreviewPhoto}
         />
@@ -116,6 +118,7 @@ export const EventGalleryView: React.FC = () => {
           isInAlbum={isInAlbum(previewPhoto.id)}
           isToggling={isTogglingPhoto(previewPhoto.id)}
           isAlbumLocked={album?.status === "submitted"}
+          isAlbumFull={isAlbumFull}
           isSubmitting={submitAlbumMutation.isPending}
           onToggleBookmark={toggleAlbumPhoto}
         />
@@ -123,6 +126,7 @@ export const EventGalleryView: React.FC = () => {
 
       <AlbumBar
         photoCount={albumPhotoCount}
+        maxSize={project?.album_size ?? undefined}
         isSubmitted={album?.status === "submitted"}
         isSubmitting={submitAlbumMutation.isPending}
         onSubmit={() => album && submitAlbumMutation.mutate()}

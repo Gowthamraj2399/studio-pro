@@ -14,6 +14,7 @@ const CreateProject: React.FC = () => {
     clientName: "",
     projectName: "",
     date: "",
+    albumSize: "",
   });
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
@@ -38,6 +39,7 @@ const CreateProject: React.FC = () => {
         project_name: formData.projectName.trim() || null,
         project_date: formData.date || null,
         cover_url: coverUrl,
+        album_size: formData.albumSize.trim() ? Number(formData.albumSize) : null,
       });
       return id;
     },
@@ -162,6 +164,31 @@ const CreateProject: React.FC = () => {
                   disabled={isSubmitting}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 dark:text-gray-300">
+                Max photos per album (Optional)
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                  photo_library
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="Unlimited"
+                  className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-gray-800 dark:bg-gray-800 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all text-base"
+                  value={formData.albumSize}
+                  onChange={(e) =>
+                    setFormData({ ...formData, albumSize: e.target.value })
+                  }
+                  disabled={isSubmitting}
+                />
+              </div>
+              <p className="text-xs text-slate-500 dark:text-gray-400">
+                Limit how many photos clients can add to their album. Leave empty for unlimited.
+              </p>
             </div>
 
             <div className="space-y-2">

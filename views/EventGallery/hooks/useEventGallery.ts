@@ -106,6 +106,10 @@ export function useEventGallery() {
 
   const cld = useMemo(() => getCloudinaryInstanceOrNull(), []);
 
+  const albumSizeLimit = project?.album_size ?? null;
+  const isAlbumFull =
+    albumSizeLimit != null && albumPhotoIds.length >= albumSizeLimit;
+
   return {
     token,
     isValidToken,
@@ -115,6 +119,8 @@ export function useEventGallery() {
     eventError,
     album,
     albumPhotoIds,
+    albumSizeLimit,
+    isAlbumFull,
     isInAlbum: (photoId: string) => albumPhotoIds.includes(photoId),
     togglingPhotoId,
     isTogglingPhoto: (photoId: string) => togglingPhotoId === photoId,

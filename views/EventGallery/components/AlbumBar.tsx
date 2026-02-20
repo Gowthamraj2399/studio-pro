@@ -2,6 +2,7 @@ import React from "react";
 
 interface AlbumBarProps {
   photoCount: number;
+  maxSize?: number;
   isSubmitted: boolean;
   isSubmitting: boolean;
   onSubmit: () => void;
@@ -9,6 +10,7 @@ interface AlbumBarProps {
 
 export const AlbumBar: React.FC<AlbumBarProps> = ({
   photoCount,
+  maxSize,
   isSubmitted,
   isSubmitting,
   onSubmit,
@@ -20,7 +22,9 @@ export const AlbumBar: React.FC<AlbumBarProps> = ({
         <span className="font-semibold">
           {isSubmitted
             ? "Album submitted"
-            : `My album (${photoCount} photo${photoCount !== 1 ? "s" : ""})`}
+            : maxSize != null
+              ? `My album (${photoCount} / ${maxSize} photo${maxSize !== 1 ? "s" : ""})`
+              : `My album (${photoCount} photo${photoCount !== 1 ? "s" : ""})`}
         </span>
       </div>
       {!isSubmitted && (

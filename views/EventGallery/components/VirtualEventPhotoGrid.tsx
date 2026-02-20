@@ -16,6 +16,7 @@ interface VirtualEventPhotoGridProps {
   isTogglingPhoto: (photoId: string) => boolean;
   isSubmitting: boolean;
   isAlbumLocked: boolean;
+  isAlbumFull: boolean;
   onToggleAlbum: (photo: Photo) => void;
   onPreview: (photo: Photo) => void;
 }
@@ -27,6 +28,7 @@ export const VirtualEventPhotoGrid: React.FC<VirtualEventPhotoGridProps> = ({
   isTogglingPhoto,
   isSubmitting,
   isAlbumLocked,
+  isAlbumFull,
   onToggleAlbum,
   onPreview,
 }) => {
@@ -76,6 +78,7 @@ export const VirtualEventPhotoGrid: React.FC<VirtualEventPhotoGridProps> = ({
                   isToggling={isTogglingPhoto(photo.id)}
                   isSubmitting={isSubmitting}
                   isAlbumLocked={isAlbumLocked}
+                  isAlbumFull={isAlbumFull}
                   onToggleAlbum={onToggleAlbum}
                   onPreview={onPreview}
                 />

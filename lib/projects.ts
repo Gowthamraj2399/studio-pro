@@ -88,6 +88,7 @@ export interface CreateProjectParams {
   project_name: string | null;
   project_date: string | null;
   cover_url: string | null;
+  album_size: number | null;
 }
 
 /**
@@ -114,6 +115,7 @@ export async function createProject(
       project_name: params.project_name || null,
       project_date: params.project_date || null,
       cover_url: params.cover_url || null,
+      album_size: params.album_size ?? null,
     })
     .select("id")
     .single();
@@ -138,6 +140,7 @@ export interface ProjectRow {
   project_date: string | null;
   cover_url: string | null;
   user_id: string | null;
+  album_size: number | null;
 }
 
 const PLACEHOLDER_THUMBNAIL =
@@ -163,6 +166,7 @@ function mapRowToProject(row: ProjectRow): Project {
     thumbnail: row.cover_url ?? PLACEHOLDER_THUMBNAIL,
     photoCount: 0,
     category: "Weddings",
+    album_size: row.album_size ?? null,
   };
 }
 
@@ -178,7 +182,7 @@ export function projectQueryKey(id: number) {
 export async function getProject(projectId: number): Promise<Project | null> {
   const { data, error } = await supabase
     .from("projects")
-    .select("id, created_at, client_name, project_name, project_date, cover_url, user_id")
+    .select("id, created_at, client_name, project_name, project_date, cover_url, user_id, album_size")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -196,7 +200,7 @@ export async function getProject(projectId: number): Promise<Project | null> {
 export async function fetchProjects(): Promise<Project[]> {
   const { data, error } = await supabase
     .from("projects")
-    .select("id, created_at, client_name, project_name, project_date, cover_url, user_id")
+    .select("id, created_at, client_name, project_name, project_date, cover_url, user_id, album_size")
     .order("created_at", { ascending: false });
 
   if (error) {
