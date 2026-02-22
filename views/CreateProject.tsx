@@ -39,7 +39,9 @@ const CreateProject: React.FC = () => {
         project_name: formData.projectName.trim() || null,
         project_date: formData.date || null,
         cover_url: coverUrl,
-        album_size: formData.albumSize.trim() ? Number(formData.albumSize) : null,
+        album_size: formData.albumSize.trim()
+          ? Number(formData.albumSize)
+          : null,
       });
       return id;
     },
@@ -55,7 +57,9 @@ const CreateProject: React.FC = () => {
       try {
         validateCoverFile(coverFile);
       } catch (err) {
-        setValidationError(err instanceof Error ? err.message : "Invalid file.");
+        setValidationError(
+          err instanceof Error ? err.message : "Invalid file.",
+        );
         return;
       }
     }
@@ -187,7 +191,8 @@ const CreateProject: React.FC = () => {
                 />
               </div>
               <p className="text-xs text-slate-500 dark:text-gray-400">
-                Limit how many photos clients can add to their album. Leave empty for unlimited.
+                Limit how many photos clients can add to their album. Leave
+                empty for unlimited.
               </p>
             </div>
 
@@ -279,7 +284,7 @@ const CreateProject: React.FC = () => {
         </div>
       </div>
       <p className="mt-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
-        © 2024 StudioShare. All rights reserved.
+        © {new Date().getFullYear()} Pxel. All rights reserved.
       </p>
     </div>
   );
