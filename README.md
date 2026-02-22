@@ -1,4 +1,4 @@
-# Studio Pro
+# Pxel
 
 A photography management platform for professional studios: manage projects (events), upload and organize photos, share galleries with clients, and let clients submit their selections.
 

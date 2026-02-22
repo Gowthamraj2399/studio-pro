@@ -13,7 +13,9 @@ const SignIn: React.FC = () => {
   const signInMutation = useMutation({
     mutationFn: signIn,
     onSuccess: () => {
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? "/";
+      const from =
+        (location.state as { from?: { pathname: string } })?.from?.pathname ??
+        "/";
       navigate(from, { replace: true });
     },
   });
@@ -28,16 +30,23 @@ const SignIn: React.FC = () => {
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-800 p-8">
           <div className="flex items-center justify-center gap-2 mb-8">
-            <span className="material-symbols-outlined text-4xl text-primary">photo_camera</span>
-            <h1 className="text-2xl font-black tracking-tight">StudioPro</h1>
+            <span className="material-symbols-outlined text-4xl text-primary">
+              photo_camera
+            </span>
+            <h1 className="text-2xl font-black tracking-tight">Pxel</h1>
           </div>
-          <h2 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">Sign in</h2>
+          <h2 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">
+            Sign in
+          </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
             Enter your email and password to continue.
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
                 Email
               </label>
               <input
@@ -52,7 +61,10 @@ const SignIn: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
                 Password
               </label>
               <input
@@ -78,7 +90,9 @@ const SignIn: React.FC = () => {
             >
               {signInMutation.isPending ? (
                 <>
-                  <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                  <span className="material-symbols-outlined animate-spin">
+                    progress_activity
+                  </span>
                   Signing in…
                 </>
               ) : (

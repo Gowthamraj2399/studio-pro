@@ -34,7 +34,7 @@ export const ChooseRoleView: React.FC = () => {
             <span className="material-symbols-outlined text-4xl text-primary">
               photo_camera
             </span>
-            <h1 className="text-2xl font-black tracking-tight">Studio Pro</h1>
+            <h1 className="text-2xl font-black tracking-tight">Pxel</h1>
           </div>
           <h2 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">
             Choose your role

@@ -40,7 +40,7 @@ const Sidebar: React.FC<{ role: UserRole }> = ({ role }) => {
           <span className="material-symbols-outlined">photo_camera</span>
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold tracking-tight">Studio Pro</h1>
+          <h1 className="text-lg font-bold tracking-tight">Pxel</h1>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
             {role === "creator" ? "Professional Admin" : "Event photos"}
           </p>

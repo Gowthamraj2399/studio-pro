@@ -1,5 +1,5 @@
 -- =============================================================================
--- studio-pro: Full Database Schema
+-- pxel: Full Database Schema
 -- Combined from all migrations (run this once on a fresh Supabase project)
 -- =============================================================================
 
@@ -33,7 +33,33 @@ create policy "Project owners can manage own projects"
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
 
--- Allow SELECT for users who have been granted event_access (added in migration 3).
+
+-- =============================================================================
+-- EVENT ACCESS (created here so it exists before the RLS policies below that
+-- reference it on projects and project_photos)
+-- Records which users have opened a share link and gained access to a project.
+-- =============================================================================
+create table if not exists public.event_access (
+  project_id bigint not null references public.projects(id) on delete cascade,
+  user_id    uuid   not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (project_id, user_id)
+);
+
+create index if not exists idx_event_access_user_id on public.event_access(user_id);
+
+alter table public.event_access enable row level security;
+
+create policy "Users can select own event_access"
+  on public.event_access for select
+  using (user_id = auth.uid());
+
+create policy "Users can insert own event_access"
+  on public.event_access for insert
+  with check (user_id = auth.uid());
+
+
+-- Allow SELECT for users who have been granted event_access.
 create policy "Users can view projects via event_access"
   on public.projects for select
   using (
@@ -143,26 +169,8 @@ create policy "Authenticated can read share_links"
 
 -- =============================================================================
 -- 4. EVENT ACCESS
--- Records which users have opened a share link and gained access to a project.
+-- (Table already created above, before the policies that reference it.)
 -- =============================================================================
-create table if not exists public.event_access (
-  project_id bigint not null references public.projects(id) on delete cascade,
-  user_id    uuid   not null references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  primary key (project_id, user_id)
-);
-
-create index if not exists idx_event_access_user_id on public.event_access(user_id);
-
-alter table public.event_access enable row level security;
-
-create policy "Users can select own event_access"
-  on public.event_access for select
-  using (user_id = auth.uid());
-
-create policy "Users can insert own event_access"
-  on public.event_access for insert
-  with check (user_id = auth.uid());
 
 
 -- =============================================================================
