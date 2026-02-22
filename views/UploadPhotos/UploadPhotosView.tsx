@@ -35,6 +35,8 @@ export const UploadPhotosView: React.FC = () => {
     uploading,
     uploadError,
     failedUploads,
+    totalBatchSize,
+    overallUploadPercent,
     retryFailedUploads,
     dismissFailedUploads,
     previewPhoto,
@@ -176,7 +178,11 @@ export const UploadPhotosView: React.FC = () => {
         isRetrying={isRetrying}
       />
 
-      <UploadProgressCard uploading={uploading} />
+      <UploadProgressCard
+        uploading={uploading}
+        totalBatchSize={totalBatchSize}
+        overallPercent={overallUploadPercent}
+      />
 
       <GridHeader
         totalCount={totalCount}

@@ -31,6 +31,10 @@ export function useUploadState({
   const [uploading, setUploading] = useState<UploadingItem[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [failedUploads, setFailedUploads] = useState<FailedUpload[]>([]);
+  /** Total files in current batch (for overall %). Reset when a new batch starts. */
+  const [totalBatchSize, setTotalBatchSize] = useState(0);
+  /** Number of files completed in current batch (so overall % = (completed * 100 + sum progress) / total). */
+  const completedInBatchRef = useRef(0);
 
   const progressRef = useRef<Map<string, number>>(new Map());
 
@@ -58,6 +62,10 @@ export function useUploadState({
   const runUploadQueue = useCallback(
     async (fileArray: File[]): Promise<FailedUpload[]> => {
       const folder = `${UPLOAD_FOLDER_PREFIX}/${projectId}`;
+      const total = fileArray.length;
+      setTotalBatchSize(total);
+      completedInBatchRef.current = 0;
+
       const next: UploadingItem[] = fileArray.map((file, i) => ({
         tempId: `upload-${Date.now()}-${i}-${Math.random().toString(36).slice(2)}`,
         filename: file.name,
@@ -101,6 +109,7 @@ export function useUploadState({
             err instanceof Error ? err.message : "Upload failed.";
           failures.push({ file, filename: file.name, error: message });
         } finally {
+          completedInBatchRef.current += 1;
           progressRef.current.delete(tempId);
           setUploading((prev) => prev.filter((u) => u.tempId !== tempId));
         }
@@ -113,6 +122,7 @@ export function useUploadState({
       );
       await Promise.all(workers);
 
+      setTotalBatchSize(0);
       return failures;
     },
     [projectId, cloudinaryCloudName, cloudinaryUploadPreset]
@@ -182,11 +192,23 @@ export function useUploadState({
 
   const onDragOver = useCallback((e: React.DragEvent) => e.preventDefault(), []);
 
+  const totalBatchSizeForDisplay = uploading.length > 0 ? totalBatchSize : 0;
+  const completedInBatch = totalBatchSizeForDisplay > 0
+    ? Math.min(completedInBatchRef.current, totalBatchSizeForDisplay)
+    : 0;
+  const sumOfProgress = uploading.reduce((a, u) => a + u.progress, 0);
+  const overallPercent =
+    totalBatchSizeForDisplay > 0
+      ? (completedInBatch * 100 + sumOfProgress) / totalBatchSizeForDisplay
+      : 0;
+
   return {
     fileInputRef,
     uploading,
     uploadError,
     failedUploads,
+    totalBatchSize: totalBatchSizeForDisplay,
+    overallUploadPercent: Math.min(100, Math.round(overallPercent * 10) / 10),
     handleFiles,
     retryFailedUploads,
     dismissFailedUploads,
